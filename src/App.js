@@ -26,12 +26,28 @@ class App extends Component {
     })
     .catch(error => console.log("Something Went Wrong: ", error))
   }
+
+  componentDidMount(){
+    firebase.database().ref('todos')
+    .on('value', snapshot => {
+      const newStateArray = []
+      snapshot.forEach(childSnapshot => {
+        newStateArray.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        })
+      })
+      this.setState({ todos: newStateArray})
+    })
+  }
+  
   render() {
     return (
       <div className="App">
         <h1>Welcome to React Fire Todos</h1>
         <Dashboard
           text={this.state.text}
+          todos={this.state.todos}
           handleChange={this.handleChange} 
           handleSubmit={this.handleSubmit}
         />

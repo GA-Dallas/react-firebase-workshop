@@ -5,7 +5,11 @@ const Dashboard = (props) => (
         <h5>Here are your todos</h5>
         <div>
             {
-                /* We'll add our Todos here */
+                props.todos.map(todo => (
+                    <h6 key={todo.id}>
+                        {todo.text}
+                    </h6>
+                ))
             }
         </div>
         <form onSubmit={props.handleSubmit}>
