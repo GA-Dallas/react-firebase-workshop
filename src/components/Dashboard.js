@@ -9,7 +9,10 @@ const Dashboard = (props) => (
             }
         </div>
         <form>
-            <input />
+            <input 
+            value={props.text} 
+            onChange={props.handleChange}
+            />
             <button>Add Todo</button>
         </form>
     </div>
