@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Dashboard from './components/Dashboard'
+import Login from './components/Login'
 import firebase from './firebaseConfig'
 import './App.css';
 
@@ -34,6 +35,19 @@ class App extends Component {
     .catch(error => console.log("Something Went Wrong", error))
   }
 
+  handleLogin = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider)
+    .then(result => {
+      this.setState({
+        user: result.user.displayName,
+        isLoggedIn: true
+      })
+      console.log("User Logged In Successfully")
+    })
+    .catch(error => console.log("Something Went Wrong: ", error.message))
+  }
+
   componentDidMount(){
     firebase.database().ref('todos')
     .on('value', snapshot => {
@@ -52,13 +66,19 @@ class App extends Component {
     return (
       <div className="App">
         <h1>Welcome to React Fire Todos</h1>
-        <Dashboard
-          text={this.state.text}
-          todos={this.state.todos}
-          handleChange={this.handleChange} 
-          handleSubmit={this.handleSubmit}
-          handleRemove={this.handleRemove}
-        />
+        {
+          this.state.isLoggedIn ? (
+            <Dashboard
+              text={this.state.text}
+              todos={this.state.todos}
+              handleChange={this.handleChange} 
+              handleSubmit={this.handleSubmit}
+              handleRemove={this.handleRemove}
+            />
+          ) : (
+            <Login handleLogin={this.handleLogin}/>
+          )
+        }
       </div>
     );
   }
