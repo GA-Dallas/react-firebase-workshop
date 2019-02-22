@@ -72,7 +72,7 @@ class App extends Component {
           ...childSnapshot.val()
         })
       })
-      this.setState({ todos: newStateArray})
+      this.setState({ todos: newStateArray })
     })
   }
 
