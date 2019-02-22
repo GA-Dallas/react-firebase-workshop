@@ -8,7 +8,7 @@ const Dashboard = (props) => (
                 /* We'll add our Todos here */
             }
         </div>
-        <form>
+        <form onSubmit={props.handleSubmit}>
             <input 
             value={props.text} 
             onChange={props.handleChange}
