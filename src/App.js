@@ -48,6 +48,20 @@ class App extends Component {
     .catch(error => console.log("Something Went Wrong: ", error.message))
   }
 
+  handleLogout = () => {
+    firebase.auth().signOut()
+    .then(() => {
+      this.setState({
+        user: null,
+        isLoggedIn: false
+      })
+      console.log("User Logged Out Successfully")
+    })
+    .catch(error => {
+      console.log("Something Went Wrong: ", error.message)
+    })
+  }
+
   componentDidMount(){
     firebase.database().ref('todos')
     .on('value', snapshot => {
@@ -74,6 +88,7 @@ class App extends Component {
               handleChange={this.handleChange} 
               handleSubmit={this.handleSubmit}
               handleRemove={this.handleRemove}
+              handleLogout={this.handleLogout}
             />
           ) : (
             <Login handleLogin={this.handleLogin}/>

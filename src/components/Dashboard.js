@@ -3,6 +3,7 @@ import React from 'react'
 const Dashboard = (props) => (
     <div>
         <h5>Here are your todos</h5>
+        <button onClick={props.handleLogout}>Logout</button>
         <div>
             {
                 props.todos.map(todo => (
