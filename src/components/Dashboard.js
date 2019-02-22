@@ -7,7 +7,9 @@ const Dashboard = (props) => (
             {
                 props.todos.map(todo => (
                     <h6 key={todo.id}>
-                        {todo.text}
+                        <span 
+                        onClick={() => props.handleRemove(todo.id)}>
+                        X</span> {todo.text}
                     </h6>
                 ))
             }

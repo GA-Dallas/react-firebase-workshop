@@ -22,9 +22,16 @@ class App extends Component {
     .push({ text: this.state.text })
     .then(() => {
       this.setState({ text: "" })
-      console.log("Data Successfully Created")
+      console.log("Data Created Successfully")
     })
     .catch(error => console.log("Something Went Wrong: ", error))
+  }
+
+  handleRemove = todoId => {
+    firebase.database().ref(`todos/${todoId}`)
+    .remove()
+    .then(() => console.log("Data Removed Successfully"))
+    .catch(error => console.log("Something Went Wrong", error))
   }
 
   componentDidMount(){
@@ -40,7 +47,7 @@ class App extends Component {
       this.setState({ todos: newStateArray})
     })
   }
-  
+
   render() {
     return (
       <div className="App">
@@ -50,6 +57,7 @@ class App extends Component {
           todos={this.state.todos}
           handleChange={this.handleChange} 
           handleSubmit={this.handleSubmit}
+          handleRemove={this.handleRemove}
         />
       </div>
     );
