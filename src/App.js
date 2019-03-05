@@ -10,7 +10,7 @@ class App extends Component {
     text: "",
     todos: [],
     user: null,
-    isLoggedIn: false
+    isAuthenticated: false
   }
 
   handleChange = e => {
@@ -73,12 +73,12 @@ class App extends Component {
       if(firebaseUser){
         this.setState({
           user: firebaseUser.displayName,
-          isLoggedIn: true
+          isAuthenticated: true
         })
       } else {
         this.setState({
           user: null,
-          isLoggedIn: false
+          isAuthenticated: false
         })
       }
     })
@@ -89,7 +89,7 @@ class App extends Component {
       <div className="App">
         <h1>Welcome to React Fire Todos</h1>
         {
-          this.state.isLoggedIn ? (
+          this.state.isAuthenticated ? (
             <Dashboard
               text={this.state.text}
               todos={this.state.todos}
