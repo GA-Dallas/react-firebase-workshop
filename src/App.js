@@ -14,7 +14,7 @@ class App extends Component {
   }
 
   handleChange = e => {
-    this.setState({ text: e.currentTarget.value })
+    this.setState({ text: e.target.value })
   }
   
   handleSubmit = e => {
