@@ -16,7 +16,8 @@ const Dashboard = (props) => (
             }
         </div>
         <form onSubmit={props.handleSubmit}>
-            <input 
+            <input
+            name="text" 
             value={props.text} 
             onChange={props.handleChange}
             />
