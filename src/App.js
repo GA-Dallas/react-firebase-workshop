@@ -70,17 +70,16 @@ class App extends Component {
       this.setState({ todos: newStateArray })
     })
     firebase.auth().onAuthStateChanged(firebaseUser => {
-      if(firebaseUser){
+      firebaseUser ?
         this.setState({
           user: firebaseUser.displayName,
           isAuthenticated: true
         })
-      } else {
+        :
         this.setState({
           user: null,
           isAuthenticated: false
         })
-      }
     })
   }
 
@@ -89,7 +88,7 @@ class App extends Component {
       <div className="App">
         <h1>Welcome to React Fire Todos</h1>
         {
-          this.state.isAuthenticated ? (
+          this.state.isAuthenticated ? 
             <Dashboard
               text={this.state.text}
               todos={this.state.todos}
@@ -98,9 +97,10 @@ class App extends Component {
               handleRemove={this.handleRemove}
               handleLogout={this.handleLogout}
             />
-          ) : (
-            <Login handleLogin={this.handleLogin}/>
-          )
+           : 
+            <Login 
+            handleLogin={this.handleLogin}
+            />
         }
       </div>
     );
