@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import Dashboard from './components/Dashboard'
-import Login from './components/Login'
+import Dashboard from './components/DashBoard/Dashboard'
+import Login from './components/Login/Login'
 import firebase from './firebaseConfig'
 import './App.css';
 
