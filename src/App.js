@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { firebase, database } from './services/firebase';
+import { firebase, database, provider } from './services/firebase';
 
 import Main from './components/Main/Main';
 import Login from './components/Login/Login';
@@ -22,6 +22,13 @@ class App extends Component {
     e.preventDefault();
     const newState = [...this.state.todos, {text: this.state.text}];
     this.setState({todos: newState, text: ""});
+   };
+
+   handleLogin = () => {
+    firebase.auth().signInWithPopup(provider)
+    .then(result => {
+      console.log('Signin Successful');
+    })
    };
 
   render() {
