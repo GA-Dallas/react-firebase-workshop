@@ -2,18 +2,44 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/auth';
 
-const config = {
-    apiKey: "AIzaSyAUAYD_z0UR8-GcahchEp7wIERT5eS1J7M",
-    authDomain: "react-firebase-b13b4.firebaseapp.com",
-    databaseURL: "https://react-firebase-b13b4.firebaseio.com",
-    projectId: "react-firebase-b13b4",
+
+firebase.initializeApp({
+    apiKey: process.env.REACT_APP_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_DOMAIN,
+    databaseURL: process.env.REACT_APP_DATABASE_URL,
+    projectId: process.env.REACT_APP_PROJECT_ID,
     storageBucket: "",
-    messagingSenderId: "828283292013",
-    appId: "1:828283292013:web:c3ef7ffd83d97d07"
-};
+    messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_APP_ID
+});
 
-firebase.initializeApp(config)
+const provider = new firebase.auth.GoogleAuthProvider()
 const database = firebase.database()
-const provider = new firebase.auth.GoogleAuthProvider();
+const auth = firebase.auth()
 
-export { firebase, provider, database }
+function login() {
+    return firebase.auth().signInWithPopup(provider)
+}
+
+function logout() {
+    return firebase.auth().signOut();
+}
+
+function create(ref, todo) {
+    return database.ref(ref).push(todo)
+}
+
+function remove(ref, todoId) {
+    return database.ref(`${ref}/${todoId}`).remove()
+}
+
+
+export { 
+    auth, 
+    login, 
+    logout, 
+    firebase, 
+    database, 
+    create,
+    remove
+ }
