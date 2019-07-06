@@ -31,11 +31,16 @@ function create(ref, todo) {
     return database.ref(ref).push(todo);
 }
 
+function remove(ref, id) {
+    return database.ref(`${ref}/${id}`).remove();
+}
+
 export { 
     firebase, 
     login, 
     logout, 
     auth, 
     database,
-    create
+    create,
+    remove
  }

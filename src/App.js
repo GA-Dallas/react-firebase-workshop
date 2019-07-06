@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Switch, Route, Link, Redirect } from 'react-router-dom';
-import { login, logout, auth, database, create } from './services/firebase';
+import { login, logout, auth, database, create, remove } from './services/firebase';
 import './App.css';
 
 
@@ -19,7 +19,13 @@ function Home() {
   )
 }
 
-function Dashboard({todos, user, text, handleChange, handleSubmit }) {
+function Dashboard({
+  todos, 
+  user, 
+  text, 
+  handleChange, 
+  handleSubmit, 
+  handleRemove }) {
   return(
     <div>
       <h2>Welcome to your Dashboard, {user.displayName.split(" ")[0]}</h2>
@@ -33,7 +39,10 @@ function Dashboard({todos, user, text, handleChange, handleSubmit }) {
       <ul>
         {
           todos.map(({id, text}) => (
-            <li key={id}>{text}</li>
+            <li key={id}>
+              <span 
+              onClick={() => handleRemove(id)}
+              >X</span>&nbsp;{text}</li>
           ))
         }
       </ul>
@@ -94,6 +103,10 @@ class App extends Component {
     }).then(() => this.setState({text: ""}))
   };
 
+  handleRemove = todoId => {
+    remove(this.state.dbRef, todoId);
+  }
+
   handleLoadTodos = () => {
     database.ref(this.state.dbRef)
     .on('value', snapshot => {
@@ -153,14 +166,16 @@ class App extends Component {
             authenticated={this.state.authenticated} />
           )}/>
           <PrivateRoute 
-          path="/dashboard"
-          authenticated={this.state.authenticated}
-          todos={this.state.todos}
-          handleChange={this.handleChange}
-          handleSubmit={this.handleSubmit}
-          text={this.state.text}
-          user={this.state.user}
-          component={Dashboard}/>
+            path="/dashboard"
+            authenticated={this.state.authenticated}
+            todos={this.state.todos}
+            handleChange={this.handleChange}
+            handleSubmit={this.handleSubmit}
+            handleRemove={this.handleRemove}
+            text={this.state.text}
+            user={this.state.user}
+            component={Dashboard}
+          />
         </Switch>
       </BrowserRouter>
     );
