@@ -24,8 +24,18 @@ function login() {
 }
 
 function logout() {
-    return auth.signOut()
+    return auth.signOut();
 }
 
+function create(ref, todo) {
+    return database.ref(ref).push(todo);
+}
 
-export { firebase, login, logout, auth }
+export { 
+    firebase, 
+    login, 
+    logout, 
+    auth, 
+    database,
+    create
+ }

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Switch, Route, Link, Redirect } from 'react-router-dom';
-import { login, logout, auth } from './services/firebase';
+import { login, logout, auth, database, create } from './services/firebase';
 import './App.css';
 
 
@@ -19,20 +19,42 @@ function Home() {
   )
 }
 
-function Dashboard() {
+function Dashboard({todos, user, text, handleChange, handleSubmit }) {
   return(
     <div>
-      <h2>You're on the Dashboard</h2>
+      <h2>Welcome to your Dashboard, {user.displayName.split(" ")[0]}</h2>
+      <img 
+      style={{
+        height: 150,
+        borderRadius: '50%' 
+      }} 
+      src={user.photoURL} 
+      alt={user.displayName}/>
+      <ul>
+        {
+          todos.map(({id, text}) => (
+            <li key={id}>{text}</li>
+          ))
+        }
+      </ul>
+      <form onSubmit={handleSubmit}>
+        <input 
+        name="text" 
+        value={text} 
+        onChange={handleChange} 
+        />
+        <button>Add Todo Item</button>
+      </form>
     </div>
   );
 }
 
-function Login({handleLogin, authenticated }) {
+function Login({ authenticated }) {
   if (authenticated) return <Redirect to="/dashboard" />
   return(
     <div>
       <h2>You Must Be Logged In To View This Page</h2>
-      <button onClick={handleLogin}>Login With Google</button>
+      <button onClick={login}>Login With Google</button>
     </div>
   );
 }
@@ -51,19 +73,59 @@ function PrivateRoute({authenticated, component: Component, ...rest}) {
 
 
 class App extends Component {
-  state = { authenticated: false };
-  
-  handleLogin = () => login();
+  state = { 
+    authenticated: false,
+    todos: [],
+    text: "",
+    user: null,
+    dbRef: null 
+  };
+
+  handleChange = e => {
+    this.setState({[e.target.name]: e.target.value});
+  };
+
+  handleSubmit = e => {
+    const {dbRef, text} = this.state;
+    e.preventDefault();
+    create(dbRef, {
+      text,
+      completed: false
+    }).then(() => this.setState({text: ""}))
+  };
+
+  handleLoadTodos = () => {
+    database.ref(this.state.dbRef)
+    .on('value', snapshot => {
+      const newState = [];
+      snapshot.forEach(childSnapshot => {
+        newState.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        })
+      })
+      this.setState({ todos: newState });
+    })
+  }
   
   componentDidMount() {
     auth.onAuthStateChanged(user => {
       if(user) {
-        this.setState({authenticated: true });
+        this.setState({
+          authenticated: true,
+          dbRef: `users/${user.uid}/todos`,
+          user: user
+         }, this.handleLoadTodos);
       } else {
-        this.setState({ authenticated: false });
+        this.setState({ 
+          authenticated: false,
+          dbRef: null,
+          user: null
+        });
       }
     })
   }
+
   render() {
     return (
       <BrowserRouter>
@@ -88,12 +150,16 @@ class App extends Component {
           <Route path="/login" render={props => (
             <Login 
             {...props}
-            authenticated={this.state.authenticated} 
-            handleLogin={this.handleLogin}/>
+            authenticated={this.state.authenticated} />
           )}/>
           <PrivateRoute 
           path="/dashboard"
           authenticated={this.state.authenticated}
+          todos={this.state.todos}
+          handleChange={this.handleChange}
+          handleSubmit={this.handleSubmit}
+          text={this.state.text}
+          user={this.state.user}
           component={Dashboard}/>
         </Switch>
       </BrowserRouter>
