@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter, Switch, Route, Link, Redirect } from 'react-router-dom';
+import { withRouter, BrowserRouter, Switch, Route, Link, Redirect } from 'react-router-dom';
 import { login, logout, auth, database, create, remove } from './services/firebase';
 import './App.css';
 
@@ -18,6 +18,37 @@ function Home() {
     </div>
   )
 }
+
+function Navigation({location, authenticated}){
+  return (  
+      <ul>
+        {
+          location.pathname !== "/"
+          && 
+          <li>
+            <Link to="/">Home</Link>
+          </li> 
+        }
+        {
+          location.pathname !== "/dashboard"
+          && 
+          <li>
+            <Link to="/dashboard">Dashboard</Link>
+          </li> 
+        }
+        {
+          authenticated 
+          &&
+          <li>
+            <span style={linkStyle} 
+            onClick={logout}>Logout</span>
+          </li>
+          }
+    </ul>
+  )
+}
+
+const RouterNav = withRouter(Navigation);
 
 function Dashboard({
   todos, 
@@ -42,7 +73,8 @@ function Dashboard({
             <li key={id}>
               <span 
               onClick={() => handleRemove(id)}
-              >X</span>&nbsp;{text}</li>
+              >X</span>&nbsp;
+            {text}</li>
           ))
         }
       </ul>
@@ -142,22 +174,7 @@ class App extends Component {
   render() {
     return (
       <BrowserRouter>
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/dashboard">Dashboard</Link>
-          </li>
-            {
-              this.state.authenticated 
-              &&
-              <li>
-                <span style={linkStyle} 
-                onClick={logout}>Logout</span>
-              </li>
-            }
-        </ul>
+        <RouterNav authenticated={this.state.authenticated}/>
         <Switch>
           <Route exact path="/" component={Home} />
           <Route path="/login" render={props => (
