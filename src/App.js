@@ -119,7 +119,7 @@ class App extends Component {
     todos: [],
     text: "",
     user: null,
-    dbRef: null 
+    dbRef: null
   };
 
   handleChange = e => {
@@ -139,7 +139,7 @@ class App extends Component {
     remove(this.state.dbRef, todoId);
   }
 
-  handleLoadTodos = () => {
+  handleAddTodoListener = () => {
     database.ref(this.state.dbRef)
     .on('value', snapshot => {
       const newState = [];
@@ -159,17 +159,19 @@ class App extends Component {
         this.setState({
           authenticated: true,
           dbRef: `users/${user.uid}/todos`,
-          user: user
-         }, this.handleLoadTodos);
+          user: user,
+         }, this.handleAddTodoListener);
       } else {
         this.setState({ 
-          authenticated: false,
-          dbRef: null,
-          user: null
-        });
+        authenticated: false,
+        dbRef: null,
+        user: null,
+        todos: []
+      })
       }
     })
   }
+
 
   render() {
     return (
