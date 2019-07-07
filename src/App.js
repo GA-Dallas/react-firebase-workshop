@@ -1,186 +1,204 @@
 import React, { Component } from 'react';
-import {auth, login, logout, database, create, remove } from './services/firebase';
-import { BrowserRouter, 
-          Route, 
-          Redirect, 
-          Switch,
-          Link } from 'react-router-dom'
+import { withRouter, BrowserRouter, Switch, Route, Link, Redirect } from 'react-router-dom';
+import { login, logout, auth, database, create, remove } from './services/firebase';
+import './App.css';
 
 
-const PrivateRoute = ({authenticated, component: Component, ...rest}) => {
+const linkStyle = {
+  cursor: 'pointer',
+  color: 'purple',
+  textDecoration: 'underline'
+}
+
+// These are our components
+function Home() {
   return(
-    <Route {...rest} render={props => 
+    <div>
+      <h2>Welcome to React Fire Todos</h2>
+    </div>
+  )
+}
+
+function Navigation({location, authenticated}){
+  return (  
+      <ul>
+        {
+          location.pathname !== "/"
+          && 
+          <li>
+            <Link to="/">Home</Link>
+          </li> 
+        }
+        {
+          location.pathname !== "/dashboard"
+          && 
+          <li>
+            <Link to="/dashboard">Dashboard</Link>
+          </li> 
+        }
+        {
+          authenticated 
+          &&
+          <li>
+            <span style={linkStyle} 
+            onClick={logout}>Logout</span>
+          </li>
+          }
+    </ul>
+  )
+}
+
+const RouterNav = withRouter(Navigation);
+
+function Dashboard({
+  todos, 
+  user, 
+  text, 
+  handleChange, 
+  handleSubmit, 
+  handleRemove }) {
+  return(
+    <div>
+      <h2>Welcome to your Dashboard, {user.displayName.split(" ")[0]}</h2>
+      <img 
+      style={{
+        height: 150,
+        borderRadius: '50%' 
+      }} 
+      src={user.photoURL} 
+      alt={user.displayName}/>
+      <ul>
+        {
+          todos.map(({id, text}) => (
+            <li key={id}>
+              <span 
+              onClick={() => handleRemove(id)}
+              >X</span>&nbsp;
+            {text}</li>
+          ))
+        }
+      </ul>
+      <form onSubmit={handleSubmit}>
+        <input 
+        name="text" 
+        value={text} 
+        onChange={handleChange} 
+        />
+        <button>Add Todo Item</button>
+      </form>
+    </div>
+  );
+}
+
+function Login({ authenticated }) {
+  if (authenticated) return <Redirect to="/dashboard" />
+  return(
+    <div>
+      <h2>You Must Be Logged In To View This Page</h2>
+      <button onClick={login}>Login With Google</button>
+    </div>
+  );
+}
+
+// Here's our PrivateRoute
+
+function PrivateRoute({authenticated, component: Component, ...rest}) {
+  return (
+    <Route {...rest} render={props => (
       authenticated 
-      ? <Component {...props} {...rest}/>
+      ? <Component {...rest} {...props} />
       : <Redirect to="/login" />
-    }/>
-  );
-}         
-
-
-const Landing = () => (
-  <h1>You're on the Landing Page</h1>
-)
-
-const Login = ({authenticated}) => {
-    if(authenticated) return <Redirect to="/dashboard" />
-    return(
-      <>
-        <h3>Please Login</h3>
-        <button onClick={() => login()}>Login</button>
-      </>
-    )
-}
-
-class TodoList extends Component {
-    state = {
-      text: ""
-    }
-
-    handleChange = e => {
-      this.setState({[e.target.name]: e.target.value });
-    };
-
-    handleSubmit = e => {
-      e.preventDefault();
-      create(this.props.dbRef, {
-        text: this.state.text,
-        completed: false
-      })
-      .then(() => {
-        this.setState({text: ""})
-      })
-    };
-
-    render() {
-      const {todos} = this.props
-      return (
-        <>
-          <h2>Todo List</h2>
-          <ul>
-            { todos.length !== 0 
-              ? todos.map(({id, text}) => (
-              <li key={id}>
-                <span 
-                onClick={() => remove(this.props.dbRef, id)}>X</span>
-                &nbsp;{text}
-              </li>
-              ))
-              :
-              <h3>You Have No Todos Yet</h3>
-            }
-          </ul>
-          <form onSubmit={this.handleSubmit}>
-            <input 
-            name="text" 
-            value={this.state.text} 
-            onChange={this.handleChange}/>
-            <button>Add Todo</button>
-          </form>
-        </>
-      );
-    }
-}
-
-
-const DashBoard = ({todos, dbRef, user}) => {
-    return(
-      <>
-        <h3>You're on the Dashboard, {user.displayName}</h3>
-        <img 
-        style={{height: 150, borderRadius: '50%'}} 
-        src={user.photoURL} 
-        alt={`${user.displayName}`}
-        />
-        <TodoList 
-        todos={todos}
-        dbRef={dbRef}
-        />
-        <button onClick={() => logout()}>Logout</button>
-      </>
+    )}/>
   );
 }
 
 
-
-export default class App extends Component {
-  state = {
+class App extends Component {
+  state = { 
     authenticated: false,
-    user: null,
-    dbRef: null,
     todos: [],
+    text: "",
+    user: null,
+    dbRef: null
+  };
+
+  handleChange = e => {
+    this.setState({[e.target.name]: e.target.value});
+  };
+
+  handleSubmit = e => {
+    const {dbRef, text} = this.state;
+    e.preventDefault();
+    create(dbRef, {
+      text,
+      completed: false
+    }).then(() => this.setState({text: ""}))
+  };
+
+  handleRemove = todoId => {
+    remove(this.state.dbRef, todoId);
   }
 
-  handleLogin = () => {
-    this.setState({authenticated: true})
+  handleAddTodoListener = () => {
+    database.ref(this.state.dbRef)
+    .on('value', snapshot => {
+      const newState = [];
+      snapshot.forEach(childSnapshot => {
+        newState.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        })
+      })
+      this.setState({ todos: newState });
+    })
   }
-
-  handleLogout = () => {
-    this.setState({authenticated: false})
-  }
-
-  updateTodos = todosArr => this.setState({todos: todosArr})
-
+  
   componentDidMount() {
     auth.onAuthStateChanged(user => {
       if(user) {
         this.setState({
-          authenticated: true, 
+          authenticated: true,
+          dbRef: `users/${user.uid}/todos`,
           user: user,
-          dbRef: `users/${user.uid}/todos`
-          }, () => {
-          database.ref(this.state.dbRef)
-          .on('value', snapshot => {
-            const newState = []
-            snapshot.forEach(child => {
-              newState.push({
-                id: child.key,
-                ...child.val()
-              })
-            })
-            this.updateTodos(newState)
-          })    
-        })
+         }, this.handleAddTodoListener);
       } else {
-        this.setState({
-          authenticated: false, 
-          user: null,
-          dbRef: null,
-          todos: [] 
-        })
+        this.setState({ 
+        authenticated: false,
+        dbRef: null,
+        user: null,
+        todos: []
+      })
       }
     })
   }
+
+
   render() {
-    return(
+    return (
       <BrowserRouter>
-        <ul>
-          <li>
-            <Link to="/">Landing</Link>
-          </li>
-          <li>
-            <Link to="/login">Login</Link>
-          </li>
-          <li>
-            <Link to="/dashboard">DashBoard</Link>
-          </li>
-        </ul>
+        <RouterNav authenticated={this.state.authenticated}/>
         <Switch>
-          <Route exact path="/" component={Landing} />
-          <Route path="/login" render={props => 
-          <Login {...props}
-          authenticated={this.state.authenticated} 
-          handleLogin={this.handleLogin}/>
-          }/>
-          <PrivateRoute path="/dashboard" 
-          authenticated={this.state.authenticated}
-          handleLogout={this.handleLogout}
-          todos={this.state.todos}
-          dbRef={this.state.dbRef}
-          user={this.state.user}
-          component={DashBoard} />
+          <Route exact path="/" component={Home} />
+          <Route path="/login" render={props => (
+            <Login 
+            {...props}
+            authenticated={this.state.authenticated} />
+          )}/>
+          <PrivateRoute 
+            path="/dashboard"
+            authenticated={this.state.authenticated}
+            todos={this.state.todos}
+            handleChange={this.handleChange}
+            handleSubmit={this.handleSubmit}
+            handleRemove={this.handleRemove}
+            text={this.state.text}
+            user={this.state.user}
+            component={Dashboard}
+          />
         </Switch>
       </BrowserRouter>
     );
   }
 }
+
+export default App;
