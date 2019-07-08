@@ -2,9 +2,6 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/auth';
 
-
-//configurations 
-
 firebase.initializeApp({
     apiKey: process.env.REACT_APP_API_KEY,
     authDomain: process.env.REACT_APP_AUTH_DOMAIN,
@@ -16,31 +13,31 @@ firebase.initializeApp({
 });
 
 const provider = new firebase.auth.GoogleAuthProvider();
-const database = firebase.database();
 const auth = firebase.auth();
+const database = firebase.database();
 
 function login() {
     return auth.signInWithPopup(provider);
 }
 
 function logout() {
-    return auth.signOut();
+    return auth.signOut()
 }
 
 function create(ref, todo) {
     return database.ref(ref).push(todo);
 }
 
-function remove(ref, id) {
-    return database.ref(`${ref}/${id}`).remove();
+function remove(ref, todoId) {
+    return database.ref(`${ref}/${todoId}`).remove();
 }
 
 export { 
     firebase, 
-    login, 
-    logout, 
     auth, 
-    database,
+    database, 
+    login, 
+    logout,
     create,
-    remove
- }
+    remove 
+}

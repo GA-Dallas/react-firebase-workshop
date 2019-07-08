@@ -1,202 +1,220 @@
 import React, { Component } from 'react';
-import { withRouter, BrowserRouter, Switch, Route, Link, Redirect } from 'react-router-dom';
-import { login, logout, auth, database, create, remove } from './services/firebase';
 import './App.css';
 
+import {
+  BrowserRouter as Router, 
+  Switch, 
+  Redirect,
+  withRouter, 
+  Route, 
+  Link } from 'react-router-dom'
 
-const linkStyle = {
+import {
+  login, 
+  auth, 
+  logout, 
+  create,
+  remove,
+  database } from './services/firebase';
+
+const linkStyles = {
   cursor: 'pointer',
-  color: 'purple',
-  textDecoration: 'underline'
+  textDecoration: 'underline',
+  color: 'purple'
 }
 
-// These are our components
+
+// Create Private Route
+
+function PrivateRoute({authenticated, component: Component, ...rest}) {
+  return(
+    <Route {...rest} render={props => (
+      authenticated
+      ? <Component {...rest} {...props} />
+      : <Redirect to="/Login" />
+    )}/>
+  )
+}
+
+// Here's out components
 function Home() {
   return(
     <div>
-      <h2>Welcome to React Fire Todos</h2>
+      <h1>Welcome to React Firebase Todos</h1>
     </div>
   )
 }
 
-function Navigation({location, authenticated}){
-  return (  
-      <ul>
-        {
-          location.pathname !== "/"
-          && 
-          <li>
-            <Link to="/">Home</Link>
-          </li> 
-        }
-        {
-          location.pathname !== "/dashboard"
-          && 
-          <li>
-            <Link to="/dashboard">Dashboard</Link>
-          </li> 
-        }
-        {
-          authenticated 
-          &&
-          <li>
-            <span style={linkStyle} 
-            onClick={logout}>Logout</span>
-          </li>
-          }
-    </ul>
+function Login({authenticated }) {
+  if(authenticated) return <Redirect to="/dashboard" />
+  return(
+    <div>
+      <h1>You Must Be Logged in to See this Page</h1>
+      <button onClick={login}>Login With Google</button>
+    </div>
   )
 }
 
-const RouterNav = withRouter(Navigation);
-
 function Dashboard({
+  user,
   todos, 
-  user, 
   text, 
-  handleChange, 
   handleSubmit, 
-  handleRemove }) {
+  handleChange,
+  handleRemove}) {
   return(
     <div>
-      <h2>Welcome to your Dashboard, {user.displayName.split(" ")[0]}</h2>
-      <img 
-      style={{
-        height: 150,
-        borderRadius: '50%' 
-      }} 
-      src={user.photoURL} 
-      alt={user.displayName}/>
+      <img
+      style={{height: 150, borderRadius: '50%'}} 
+      src={user.photoURL} alt={user.displayName} />
+      <h1>Welcome to your Dashboard, {user.displayName.split(" ")[0]}</h1>
+      <p>Here are your todos</p>
+
       <ul>
         {
           todos.map(({id, text}) => (
             <li key={id}>
               <span 
-              onClick={() => handleRemove(id)}
-              >X</span>&nbsp;
-            {text}</li>
+              onClick={() => handleRemove(id)}>X</span>
+              &nbsp;{text}
+            </li>
           ))
         }
       </ul>
+
       <form onSubmit={handleSubmit}>
         <input 
         name="text" 
         value={text} 
-        onChange={handleChange} 
-        />
-        <button>Add Todo Item</button>
+        onChange={handleChange} />
+        <button>Add New Todo</button>
       </form>
     </div>
-  );
+  )
 }
 
-function Login({ authenticated }) {
-  if (authenticated) return <Redirect to="/dashboard" />
-  return(
-    <div>
-      <h2>You Must Be Logged In To View This Page</h2>
-      <button onClick={login}>Login With Google</button>
-    </div>
-  );
-}
-
-// Here's our PrivateRoute
-
-function PrivateRoute({authenticated, component: Component, ...rest}) {
+function Navigation({authenticated, location }) {
   return (
-    <Route {...rest} render={props => (
-      authenticated 
-      ? <Component {...rest} {...props} />
-      : <Redirect to="/login" />
-    )}/>
-  );
+    <nav>
+        <ul>
+          {
+              location.pathname !== '/'
+              &&
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+            }
+            {
+              location.pathname !== '/dashboard'
+              &&
+              <li>
+                <Link to="/dashboard">Dashboard</Link>
+              </li>
+            }
+            <li>
+              {
+                authenticated 
+                ?
+                <span
+                style={linkStyles} 
+                onClick={logout}>Logout</span>
+                :
+                <span
+                style={linkStyles} 
+                onClick={login}>Login</span>
+              }
+            </li>
+        </ul>
+    </nav>
+  )
 }
 
+const RouterNav = withRouter(Navigation);
 
 class App extends Component {
-  state = { 
-    authenticated: false,
-    todos: [],
-    text: "",
-    user: null,
-    dbRef: null
-  };
+  constructor(){
+    super();
+    this.state = this.getNewState();
+  }
 
+  getNewState = () => {
+    return {
+      authenticated: false,
+      user: null,
+      dbRef: null,
+      text: "",
+      todos: []
+    };
+  }
+  
   handleChange = e => {
-    this.setState({[e.target.name]: e.target.value});
+    this.setState({[e.target.name]: e.target.value })
   };
-
+  
   handleSubmit = e => {
     const {dbRef, text} = this.state;
     e.preventDefault();
     create(dbRef, {
       text,
       completed: false
-    }).then(() => this.setState({text: ""}))
+    })
+    .then(() => this.setState({text: ""}));
   };
 
   handleRemove = todoId => {
     remove(this.state.dbRef, todoId);
-  }
+  };
 
   handleAddTodoListener = () => {
     database.ref(this.state.dbRef)
     .on('value', snapshot => {
-      const newState = [];
+      const newStateArray = [];
       snapshot.forEach(childSnapshot => {
-        newState.push({
+        newStateArray.push({
           id: childSnapshot.key,
           ...childSnapshot.val()
-        })
-      })
-      this.setState({ todos: newState });
-    })
-  }
-  
+        });
+      });
+      this.setState({todos: newStateArray})
+    });
+  };
+
   componentDidMount() {
     auth.onAuthStateChanged(user => {
       if(user) {
         this.setState({
           authenticated: true,
-          dbRef: `users/${user.uid}/todos`,
-          user: user,
-         }, this.handleAddTodoListener);
+          user,
+          dbRef: `users/${user.uid}/todos`
+        }, this.handleAddTodoListener);
       } else {
-        this.setState({ 
-        authenticated: false,
-        dbRef: null,
-        user: null,
-        todos: []
-      })
+        this.setState(this.getNewState());
       }
     })
   }
 
-
   render() {
     return (
-      <BrowserRouter>
+      <Router>
         <RouterNav authenticated={this.state.authenticated}/>
         <Switch>
           <Route exact path="/" component={Home} />
           <Route path="/login" render={props => (
-            <Login 
-            {...props}
+            <Login
             authenticated={this.state.authenticated} />
-          )}/>
+          )} />
           <PrivateRoute 
-            path="/dashboard"
-            authenticated={this.state.authenticated}
-            todos={this.state.todos}
-            handleChange={this.handleChange}
-            handleSubmit={this.handleSubmit}
-            handleRemove={this.handleRemove}
-            text={this.state.text}
-            user={this.state.user}
-            component={Dashboard}
-          />
+          path="/dashboard"
+          authenticated={this.state.authenticated}
+          handleChange={this.handleChange}
+          handleSubmit={this.handleSubmit}
+          handleRemove={this.handleRemove}
+          user={this.state.user} 
+          text={this.state.text} 
+          todos={this.state.todos} 
+          component={Dashboard} />
         </Switch>
-      </BrowserRouter>
+      </Router>
     );
   }
 }
